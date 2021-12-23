@@ -67,7 +67,6 @@ int main(int argc, char *argv[]){
     } else if (argc == 3){
         // Camiones = 0 y Coches = 2*Plazas*Plantas
         ncoches = 2 * nplantas * nplazas;
-        initCola();
         printf("Plazas: %ld\n", nplazas);
         printf("Plantas: %ld\n", nplantas);
         printf("Coches: %ld\n", ncoches);
@@ -75,7 +74,6 @@ int main(int argc, char *argv[]){
     } else if (argc == 4){
         // 3º arg -> Coches
         ncoches = strtol(argv[3], NULL, 10);
-        initCola();
         printf("Plazas: %ld\n", nplazas);
         printf("Plantas: %ld\n", nplantas);
         printf("Coches: %ld\n", ncoches);
@@ -83,12 +81,14 @@ int main(int argc, char *argv[]){
         // 3º arg -> Coches | 4º arg -> Camiones
         ncoches = strtol(argv[3], NULL, 10);
         ncamiones = strtol(argv[4], NULL, 10);
-        initCola();
         printf("Plazas: %ld\n", nplazas);
         printf("Plantas: %ld\n", nplantas);
         printf("Coches: %ld\n", ncoches);
         printf("Camiones: %ld\n", ncamiones);
     }
+
+    initCola();
+    gestionEntradas();
     
     matrixFree(parking, nplazas);
 }
@@ -149,7 +149,7 @@ void gestionEntradas(){
                 espera[aux.matricula].matricula = -1;
                 espera[aux.matricula+1].matricula = -1;
             }  
-        }else{ //Ha pasado algo raro
+        }else{ //Ha pasado algo raro, lanzaremos aviso o algo, supongo
 
         }
     }
