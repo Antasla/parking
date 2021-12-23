@@ -2,6 +2,7 @@
 .idea
 cmake-build-debug/
 main
+*.vscode
 
 CMakeLists.txt
 # Prerequisites

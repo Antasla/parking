@@ -15,6 +15,8 @@ typedef struct vehiculo{ //De momento no hace falta, pero por si le metemos alg�
 
 #define coche 1
 #define camion 2
+#define true 1
+#define false 0
 
 int **parking; //Matriz
 vehiculo *espera;
@@ -28,11 +30,16 @@ long huecosDobles;
 
 
 void matrixFree(int **matrix, long n);
+void initParking();
+void initCola();
+void gestionEntradas();
 void entrada(int vehiculo, int matricula);
 void salida(int vehiculo, int matricula);
 void comprobarHuecos();
 void controlTiempos();
-void llenarEspera();
+int esperaVacia();
+vehiculo vehiculoEnEspera();
+void prueba(void);
 
 
 int main(int argc, char *argv[]){
@@ -44,35 +51,39 @@ int main(int argc, char *argv[]){
 	for (int i = 0; i < nplazas; ++i)
         {parking[i] = malloc(2 * sizeof(int));}
 
-    pthread_mutex_t t1 = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_t t2 = PTHREAD_MUTEX_INITIALIZER;
+    initParking();
 
+    nplazas = strtol(argv[1], NULL, 10);
+    nplantas = strtol(argv[2], NULL, 10);
+
+    pthread_mutex_t t1, t2;
+
+    pthread_mutex_init(&t1, NULL);
+    pthread_mutex_init(&t1, NULL);
+    
 
     if (argc < 3){
         printf("Argumentos inválidos\n");
     } else if (argc == 3){
-        // 1º arg -> Plazas | 2º arg -> Plantas
         // Camiones = 0 y Coches = 2*Plazas*Plantas
-        nplazas = strtol(argv[1], NULL, 10);
-        nplantas = strtol(argv[2], NULL, 10);
         ncoches = 2 * nplantas * nplazas;
+        initCola();
         printf("Plazas: %ld\n", nplazas);
         printf("Plantas: %ld\n", nplantas);
         printf("Coches: %ld\n", ncoches);
+        pthread_create(&t1, NULL, prueba, NULL);
     } else if (argc == 4){
-        // 1º arg -> Plazas | 2º arg -> Plantas | 3º arg -> Coches
-        nplazas = strtol(argv[1], NULL, 10);
-        nplantas = strtol(argv[2], NULL, 10);
+        // 3º arg -> Coches
         ncoches = strtol(argv[3], NULL, 10);
+        initCola();
         printf("Plazas: %ld\n", nplazas);
         printf("Plantas: %ld\n", nplantas);
         printf("Coches: %ld\n", ncoches);
     } else if (argc == 5){
-        // 1º arg -> Plazas | 2º arg -> Plantas | 3º arg -> Coches | 4º arg -> Camiones
-        nplazas = strtol(argv[1], NULL, 10);
-        nplantas = strtol(argv[2], NULL, 10);
+        // 3º arg -> Coches | 4º arg -> Camiones
         ncoches = strtol(argv[3], NULL, 10);
         ncamiones = strtol(argv[4], NULL, 10);
+        initCola();
         printf("Plazas: %ld\n", nplazas);
         printf("Plantas: %ld\n", nplantas);
         printf("Coches: %ld\n", ncoches);
@@ -88,6 +99,60 @@ void matrixFree(int **matrix, long n) {
 		free(matrix[i]);
 	}
 	free(matrix);
+}
+
+void initParking(){
+    
+    for(int i=0; i < nplazas; i++)
+        for(int j = 0; j < nplantas; j++)
+            parking[i][j]=-1;
+
+}
+
+void initCola(){
+    int auxCoches, auxCamiones, i;
+    while( i < (ncoches+ncamiones)){
+        if(auxCoches>0){
+            espera[i].matricula=i;
+            auxCoches--;
+            i++;
+            if(auxCamiones>0){
+                espera[i].matricula=i;
+                espera[i+1].matricula=i;
+                i++;
+            }
+        }else if(auxCoches == 0){
+            if(auxCamiones>0){
+                espera[i].matricula=i;
+                espera[i+1].matricula=i;
+                i = i+2;
+            }
+        }        
+    }
+}
+
+void gestionEntradas(){
+
+    vehiculo aux;
+
+    while (!esperaVacia()){
+        comprobarHuecos();
+        aux = vehiculoEnEspera();
+        if(aux.tipo == coche){
+            if(huecos > 0){
+                //Lanzar un hilo con la función de entrada
+                espera[aux.matricula].matricula = -1;
+            }
+        }else if(aux.tipo == camion){
+            if(huecosDobles > 0){
+                //Lanzar un hilo con la función de entrada
+                espera[aux.matricula].matricula = -1;
+                espera[aux.matricula+1].matricula = -1;
+            }  
+        }else{ //Ha pasado algo raro
+
+        }
+    }
 }
 
 void entrada(int vehiculo, int matricula){
@@ -126,7 +191,6 @@ void entrada(int vehiculo, int matricula){
     }
 }
 
-/*
 void salida(int vehiculo, int matricula){
     //TODO ¿vamos a implementar matriculas de camion y de coche distintas?
     for(int i=0; i < nplazas; i++){
@@ -148,7 +212,7 @@ void salida(int vehiculo, int matricula){
     printf("Hay %ld huecos para coches:", huecos);
     printf("Hay %ld huecos para camiones:", huecosDobles);
 }
-*/
+
 void comprobarHuecos(){
 
     for(int i=0; i < nplazas; i++)
@@ -166,7 +230,24 @@ void controlTiempos(){
 
 }
 
-void llenarEspera(){
-    for (int i = 0; i < (ncoches+ncamiones); i++)
-        espera[i].matricula = i;
+int esperaVacia(){
+    for(int i = 0; i < (ncoches+ncamiones); i++){
+        if(espera[i].matricula != -1){
+            return false;
+        }
+    }
+    return true;
+}
+
+vehiculo vehiculoEnEspera(){
+    for(int i = 0; i < (ncoches+ncamiones); i++){
+        if(espera[i].matricula != -1){
+            return espera[i];
+        }
+    }
+}
+
+
+void prueba(void){
+    printf("DEBUG");
 }
