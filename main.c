@@ -1,8 +1,3 @@
-//
-// Created by ismael on 9/12/21.
-//
-
-#include <bits/pthreadtypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -164,8 +159,8 @@ void gestionEntradas(){ //TENGO MUCHAS DUDAS CON ESTO
                 espera[aux.matricula].matricula = -1;
                 espera[aux.matricula+1].matricula = -1;
             }  
-        }else{ //Ha pasado algo raro, lanzaremos aviso o algo, supongo
-
+        }else{ 
+            printf("No hay vehículo en espera"); //No debería llegar nunca aquí
         }
     }
     pthread_mutex_destroy(&mutex); //Destruimos todo
@@ -177,8 +172,12 @@ void gestionEntradas(){ //TENGO MUCHAS DUDAS CON ESTO
 void entradaCoche(void){
     
     printf("Coche entrando ...");
+    
+    nPlaza auxPlaza;
 
-    nPlaza auxPlaza = huecoVacioCoche();
+    if(huecoVacioCoche().planta != -1)
+        auxPlaza = huecoVacioCoche();
+
     vehiculo auxCoche = vehiculoEnEspera();
 
     parking[auxPlaza.planta][auxPlaza.plaza] = auxCoche.matricula;
@@ -283,11 +282,15 @@ int esperaVacia(){
 }
 
 vehiculo vehiculoEnEspera(){
+    vehiculo aux;
+    aux.matricula = -1;
+    aux.tipo = -1;
     for(int i = 0; i < (ncoches+ncamiones); i++){
         if(espera[i].matricula != -1){
             return espera[i];
         }
     }
+    return aux;
 }
 
 nPlaza huecoVacioCoche(){
