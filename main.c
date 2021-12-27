@@ -116,7 +116,6 @@ int main(int argc, char *argv[]){
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&condicion, NULL);
 
-    matrixFree(parking, nplazas);
     while(TRUE);
 }
 
@@ -192,6 +191,7 @@ void *addCamion(void *matricula) {
 
 void *addCoche(void *matricula){
     int m = *((int *) matricula);
+    printf("Matricula -> %d\n",m);
     int plaza_recien_ocupada[2];
     int encontrado;
     while(TRUE){
@@ -218,7 +218,7 @@ void *addCoche(void *matricula){
             }
         }
         printf("Entrada al parking. COCHE %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[0], plaza_recien_ocupada[1]);
-        //printf("Plazas libres: %ld\n", (ncoches * nplantas) - plazas_ocupadas);
+        //printf("Plazas libres: %ld\n", (nplazas * nplantas) - plazas_ocupadas);
         pthread_mutex_unlock(&mutex);
         /* Salimos de la ZONA CRÍTICA, dormimos random y salimos del parking */
         sleep((rand() % 10) + 5);
