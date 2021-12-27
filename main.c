@@ -208,8 +208,8 @@ void *addCoche(void *matricula){
                 if (parking[i][j] == VACIO){ // Tenemos un hueco para el coche
                     parking[i][j] = m;
                     plazas_ocupadas += 1;
-                    plaza_recien_ocupada[0] = j; // La planta que se encuentra la plaza
-                    plaza_recien_ocupada[1] = i; // Plaza ocupada
+                    plaza_recien_ocupada[0] = i; // La planta que se encuentra la plaza
+                    plaza_recien_ocupada[1] = j; // Plaza ocupada
                     encontrado = TRUE;
                     break;
                 }
@@ -226,7 +226,7 @@ void *addCoche(void *matricula){
         pthread_mutex_lock(&mutex);
         parking[plaza_recien_ocupada[0]][plaza_recien_ocupada[1]] = VACIO; // Ponemos el hueco del parking vacío
         plazas_ocupadas -= 1;
-        printf("Salida al parking. COCHE %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[0], plaza_recien_ocupada[1]);
+        printf("Salida del parking. COCHE %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[1], plaza_recien_ocupada[0]);
         //printf("Plazas libres: %ld\n", (ncoches * nplantas) - plazas_ocupadas);
         /* Desbloqueamos al menos un thread que está bloqueado por el parking lleno */
         // https://linux.die.net/man/3/pthread_cond_signal
