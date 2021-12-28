@@ -7,6 +7,8 @@
 typedef struct vehiculo{ //De momento no hace falta, pero por si le metemos algún atributo más
     int tipo;
     int matricula;
+    int tiempoEntrada;
+    int tiempoSalida;
 } vehiculo; 
 
 typedef struct nPlaza{
@@ -37,8 +39,8 @@ void matrixFree(int **matrix, long n);
 void initParking();
 void initCola();
 void gestionEntradas();
-void entradaCoche(void);
-void entradaCamion(void);
+void *entradaCoche();
+void *entradaCamion();
 void salida(int vehiculo, int matricula);
 void comprobarHuecos();
 void controlTiempos();
@@ -88,7 +90,10 @@ int main(int argc, char *argv[]){
         printf("Camiones: %ld\n", ncamiones);
     }
 
+    /* Generamos una cola de coches y camiones, alternándolos */
     initCola();
+
+    /* Ponemos en marcha la entrada y salida */
     gestionEntradas();
 
     matrixFree(parking, nplazas);
@@ -135,7 +140,8 @@ void initCola(){
 void gestionEntradas(){ //TENGO MUCHAS DUDAS CON ESTO
 
     vehiculo aux;
-    pthread_t t1, t2;
+
+    pthread_t hiloCoches[ncoches], hiloCamiones[ncamiones];
 
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&noLleno, NULL); //Revisar
@@ -146,16 +152,27 @@ void gestionEntradas(){ //TENGO MUCHAS DUDAS CON ESTO
         aux = vehiculoEnEspera();
         if(aux.tipo == coche){
             if(huecos > 0){
-                pthread_create(&t1, NULL, entradaCoche, NULL);//Lanzar un hilo con la función de entrada 
-                //No sé por qué da el fallo :c
-                pthread_join(t1, NULL); //Esperamos a que termine
+                /* Creamos los hilos con los argumentos para la función */
+                for (int i = 0; i < ncamiones; ++i) {
+                    if (0 != pthread_create(&hiloCoches[i], NULL, entradaCoche, &espera)){
+                        perror("No se ha podido crear hilo de coche\n");
+                        exit(-1);
+                    }
+                }
+                /* pthread_join(hiloCoches, NULL); */ //Esperamos a que termine
                 espera[aux.matricula].matricula = -1;
             }
         }else if(aux.tipo == camion){
             if(huecosDobles > 0){
-                pthread_create(&t1, NULL, entradaCamion, NULL);//Lanzar un hilo con la función de entrada
-                pthread_join(t1, NULL);
-                pthread_join(t1, NULL);
+                /* Creamos los hilos con los argumentos para la función */
+                for (int i = 0; i < ncamiones; ++i) {
+                    if (0 != pthread_create(&hiloCamiones[i], NULL, entradaCamion, &espera)){
+                        perror("No se ha podido crear hilo de camión\n");
+                        exit(-1);
+                    }
+                }
+                /* pthread_join(hiloCoches, NULL);
+                pthread_join(hiloCoches, NULL); */
                 espera[aux.matricula].matricula = -1;
                 espera[aux.matricula+1].matricula = -1;
             }  
@@ -163,19 +180,29 @@ void gestionEntradas(){ //TENGO MUCHAS DUDAS CON ESTO
             printf("No hay vehículo en espera"); //No debería llegar nunca aquí
         }
     }
+    /* Inicializamos el mutex y la condición que usaremos para esperar cuando el parking esté lleno */
+/*     pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&noLleno, NULL);
+    pthread_cond_init(&noVacio, NULL);
+ */
+
     pthread_mutex_destroy(&mutex); //Destruimos todo
     pthread_cond_destroy(&noLleno);
     pthread_cond_destroy(&noVacio);
     exit(0);
 }
 
-void entradaCoche(void){
-    
-    printf("Coche entrando ...");
+void *entradaCoche(){
     
     nPlaza auxPlaza;
 
-    if(huecoVacioCoche().planta != -1)
+    printf("Coche entrando ...");
+
+    sleep((rand() % 10) + 5);
+    /* Cuando despertamos, entramos en ZONA CRÍTICA */
+    pthread_mutex_lock(&mutex);
+
+    while(huecoVacioCoche().planta != -1) //Esperamos a un hueco libre, esto habría que controlarlo con la condición
         auxPlaza = huecoVacioCoche();
 
     vehiculo auxCoche = vehiculoEnEspera();
@@ -184,53 +211,57 @@ void entradaCoche(void){
 
     printf("Coche con matrícula %d aparcado en plaza %d de la planta %d. \n", auxCoche.matricula, auxPlaza.plaza, auxPlaza.planta);
 
-    /* sleep(rand() % 100);
-    comprobarHuecos();
-    if(vehiculo == 1){ //Coche
-        if(huecos < 1){
-            //Habrá que esperar, supongo
-        }else{
-            // ZONA CRÍTICA 
-            for(int i=0; i < nplazas; i++){
-                for(int j = 0; j < nplantas; j++){
-                    if(parking[i][j] == -1){
-                        parking[i][j] = matricula;
-                        printf("Coche %d entrando...", matricula);
-                    }
-                }
-            }
+    pthread_mutex_unlock(&mutex);
+    /* Salimos de la ZONA CRÍTICA, dormimos random y salimos del parking */
+    
+    //sleep((rand() % 100) + 5); //Esto es de la salida y pensaba hacerlo a parte
+    /* Volvemos a entrar en ZONA CRÍTICA */
+  /*   pthread_mutex_lock(&mutex); 
+    
+    for(int i=0; i < nplazas; i++){
+        for(int j = 0; j < nplantas; j++){
+            if(parking[i][j] == auxCoche.matricula)
+                parking[i][j] = -1;
         }
-    }else if(vehiculo == 2){ //Camión
-        if(huecosDobles < 1){
-            //Esperamos
-        }else{
-            // ZONA CRÍTICA 
-            for(int i=0; i < nplazas; i++){
-                for(int j = 0; j < nplantas; j++){
-                    if ((nplazas < j+1) && (parking[i][j] == -1 && parking[i][j+1] == -1)){ //TODO se va de memoria
-                        parking[i][j] = matricula;
-                        printf("Camión %d entrando...", matricula);
-                    }
-                }
-            }
-        } 
-    }else{
-        printf("Se ha producido un error");
-    } */
+    }
+
+    comprobarHuecos();
+    
+    printf("Coche con matrícula %d saliendo de plaza %d de la planta %d. \n", auxCoche.matricula, auxPlaza.plaza, auxPlaza.planta);
+
+    pthread_cond_signal(&noLleno);
+    pthread_mutex_unlock(&mutex); */
 }
 
-void entradaCamion(void){
+void *entradaCamion(){
     
+    nPlaza auxPlaza;
+
     printf("Camion entrando ...");
 
-    nPlaza auxPlaza = huecoVacioCamion();
+    sleep((rand() % 10) + 5);
+    /* Cuando despertamos, entramos en ZONA CRÍTICA */
+    pthread_mutex_lock(&mutex);
+
+    while(huecoVacioCoche().planta != -1) //Esperamos a un hueco libre, esto habría que controlarlo con la condición
+        auxPlaza = huecoVacioCamion();
+
     vehiculo auxCamion = vehiculoEnEspera();
 
     parking[auxPlaza.planta][auxPlaza.plaza] = auxCamion.matricula;
     parking[auxPlaza.planta][auxPlaza.plaza + 1] = auxCamion.matricula;
 
-    printf("Coche con matrícula %d aparcado en plaza %d de la planta %d. \n", auxCamion.matricula, auxPlaza.plaza, auxPlaza.planta);
+    printf("Camión con matrícula %d aparcado en plaza %d de la planta %d. \n", auxCamion.matricula, auxPlaza.plaza, auxPlaza.planta);
 
+    while(huecoVacioCoche().planta != -1) //Esperamos a un hueco libre, esto habría que controlarlo con la condición
+        auxPlaza = huecoVacioCoche();
+
+    vehiculo auxCoche = vehiculoEnEspera();
+
+    parking[auxPlaza.planta][auxPlaza.plaza] = auxCoche.matricula;
+
+    pthread_mutex_unlock(&mutex);
+    /* Salimos de la ZONA CRÍTICA */
 }
 
 void salida(int vehiculo, int matricula){
