@@ -54,15 +54,6 @@ void prueba(void);
 
 int main(int argc, char *argv[]){
 
-    parking = (int **) malloc(nplazas * sizeof(int *));
-    espera = (vehiculo *) malloc((ncoches + ncamiones*2) * sizeof(vehiculo *));
-
-    /* ----- Reservar memoria para la matriz ----- */
-	for (int i = 0; i < nplazas; ++i)
-        {parking[i] = malloc(2 * sizeof(int));}
-
-    printf("Inicializando parking...\n");
-    initParking();
 
     nplazas = strtol(argv[1], NULL, 10);
     nplantas = strtol(argv[2], NULL, 10);
@@ -91,6 +82,19 @@ int main(int argc, char *argv[]){
         printf("Coches: %ld\n", ncoches);
         printf("Camiones: %ld\n", ncamiones);
     }
+
+    espera = (vehiculo *) malloc((ncoches + ncamiones*2) * sizeof(vehiculo *));
+
+    /* Reservar filas para el parking con capacidad para nplazas */
+    parking = (int **) malloc(nplantas * sizeof(int *));
+
+    /* Dentro de cada fila reservar las plazas * plantas que necesitemos */
+    for (int i = 0; i < nplazas; ++i){
+        parking[i] = (int *) malloc(nplazas * sizeof(int));
+    }
+
+    printf("Inicializando parking...\n");
+    initParking();
 
     /* Generamos una cola de coches y camiones, alternándolos */
     printf("Generando cola... \n");
