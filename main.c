@@ -217,7 +217,7 @@ void *addCoche(void *matricula){
                     break;
             }
         }
-        printf("Entrada al parking. COCHE %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[0], plaza_recien_ocupada[1]);
+        printf("Entrada al parking. COCHE %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[1], plaza_recien_ocupada[0]);
         //printf("Plazas libres: %ld\n", (nplazas * nplantas) - plazas_ocupadas);
         pthread_mutex_unlock(&mutex);
         /* Salimos de la ZONA CRÍTICA, dormimos random y salimos del parking */
