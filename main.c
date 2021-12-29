@@ -55,7 +55,7 @@ void prueba(void);
 int main(int argc, char *argv[]){
 
     parking = (int **) malloc(nplazas * sizeof(int *));
-    espera = (vehiculo *) malloc((ncoches + ncamiones*2) * sizeof(int *));
+    espera = (vehiculo *) malloc((ncoches + ncamiones*2) * sizeof(vehiculo *));
 
     /* ----- Reservar memoria para la matriz ----- */
 	for (int i = 0; i < nplazas; ++i)
@@ -121,11 +121,13 @@ void initParking(){
 
 void initCola(){
     int auxCoches=ncoches, auxCamiones=ncamiones, i;
+    printf("\n");
     while( i < (ncoches+(ncamiones*2))){
         if(auxCoches>0){
             espera[i].matricula=i;
             espera[i].tipo=1;
             printf("%do  ", espera[i].matricula);
+            
             auxCoches--;
             i++;
         }
@@ -136,18 +138,10 @@ void initCola(){
             espera[i+1].tipo=2;
             printf("%dc  ", espera[i].matricula);
             i=i+2;
-            auxCamiones--;
-            
-        }/* else if(auxCoches == 0){
-            if(auxCamiones>0){
-                espera[i].matricula=i;
-                espera[i+1].matricula=i;
-                espera[i].tipo=2;
-                espera[i].tipo=2;
-                i = i+2;
-            }
-        }     */    
+            auxCamiones--;   
+        }   
     }
+    printf("\n");
 }
 
 void gestionEntradas(){
@@ -166,7 +160,7 @@ void gestionEntradas(){
 
     while (!esperaVacia()){
         aux = vehiculoEnEspera(); 
-        printf("%d\n", aux.tipo);
+        //printf("%d\n", aux.tipo);
         if(aux.tipo == coche){
             
             if (0 != pthread_create(&hiloCoches[i], NULL, entradaCoche, NULL)){
@@ -189,7 +183,7 @@ void gestionEntradas(){
             espera[aux.matricula+1].matricula = -1; 
 
         }else{ 
-            printf("No hay vehículo en espera\n"); //No debería llegar nunca aquí
+            //printf("No hay vehículo en espera\n"); //No debería llegar nunca aquí
         }
         i++;
     }
@@ -369,8 +363,7 @@ void imprimirCola(){
     for(int i = 0; i < (ncoches+ncamiones*2); i++){
         printf("%d  ", espera[i].matricula);
     }
-        printf("\n");
-
+    printf("\n");
 }
 
 void prueba(void){
