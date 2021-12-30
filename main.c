@@ -35,14 +35,15 @@ void matrixShow(int **matrix);
 int main(int argc, char *argv[]){
 
     srand(time(0));
-    // 1º arg -> Plazas | 2º arg -> Plantas
-    nplazas = strtol(argv[1], NULL, 10);
-    nplantas = strtol(argv[2], NULL, 10);
 
     if (argc < 3){
         printf("Argumentos inválidos\n");
         return -1;
     } else if (argc == 3){
+        // 1º arg -> Plazas | 2º arg -> Plantas
+        nplazas = strtol(argv[1], NULL, 10);
+        nplantas = strtol(argv[2], NULL, 10);
+
         // Camiones = 0 y Coches = 2*Plazas*Plantas
         ncoches = 2 * nplantas * nplazas;
         ncamiones = 0;
@@ -50,12 +51,20 @@ int main(int argc, char *argv[]){
         printf("Plantas: %ld\n", nplantas);
         printf("Coches: %ld\n", ncoches);
     } else if (argc == 4){
+        // 1º arg -> Plazas | 2º arg -> Plantas
+        nplazas = strtol(argv[1], NULL, 10);
+        nplantas = strtol(argv[2], NULL, 10);
+
         // 3º arg -> Coches
         ncoches = strtol(argv[3], NULL, 10);
         printf("Plazas: %ld\n", nplazas);
         printf("Plantas: %ld\n", nplantas);
         printf("Coches: %ld\n", ncoches);
     } else if (argc == 5){
+        // 1º arg -> Plazas | 2º arg -> Plantas
+        nplazas = strtol(argv[1], NULL, 10);
+        nplantas = strtol(argv[2], NULL, 10);
+
         // 3º arg -> Coches | 4º arg -> Camiones
         ncoches = strtol(argv[3], NULL, 10);
         ncamiones = strtol(argv[4], NULL, 10);
@@ -80,7 +89,7 @@ int main(int argc, char *argv[]){
 
     /* Seteamos la matriz a VACIO */
     matrixFill(parking);
-    //matrixShow(parking);
+
     /* Creamos hilos para cada coche y camión  */
     pthread_t hilosCoches[ncoches];
     pthread_t hilosCamiones[ncamiones];
@@ -185,8 +194,6 @@ void *addCamion(void *matricula) {
                     ocupado = TRUE;
                     break;
                 }
-                if (ocupado == TRUE)
-                    break;
             }
             if(ocupado == TRUE)
                 break;
