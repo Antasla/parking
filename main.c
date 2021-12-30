@@ -64,6 +64,7 @@ int main(int argc, char *argv[]){
         printf("Coches: %ld\n", ncoches);
         printf("Camiones: %ld\n", ncamiones);
     }
+    printf("\n");
     /* ----- Reservar memoria para la matriz ----- */
 
     /* Reservar filas para el parking con capacidad para nplazas */
@@ -79,7 +80,7 @@ int main(int argc, char *argv[]){
 
     /* Seteamos la matriz a VACIO */
     matrixFill(parking);
-    matrixShow(parking);
+    //matrixShow(parking);
     /* Creamos hilos para cada coche y camión  */
     pthread_t hilosCoches[ncoches];
     pthread_t hilosCamiones[ncamiones];
@@ -136,7 +137,7 @@ void matrixFill(int **matrix){
 }
 
 void matrixShow(int **matrix){
-    printf("\n");
+    
     for (int i = 0; i < nplantas; ++i) {
         for (int j = 0; j < nplazas; ++j) {
             if(matrix[i][j]>1000){
@@ -149,7 +150,11 @@ void matrixShow(int **matrix){
         }
         printf("\n");
     }
-    printf("\n");
+    for(int i = 0; i<nplantas; i++){
+        printf("\033[A\r\33[2K");
+    }
+    printf("\033[A\r\33[2K");
+    printf("\033[A\r\33[2K");
 }
 
 void *addCamion(void *matricula) {
@@ -210,6 +215,8 @@ void *addCamion(void *matricula) {
 void *addCoche(void *matricula){
     int m = *((int *) matricula);
     printf("Matricula -> %d\n",m);
+    if(m == ncoches)
+        printf("\n");
     int plaza_recien_ocupada[2];
     int encontrado;
     while(TRUE){
