@@ -2,7 +2,15 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <stdlib.h>
 
+#define ROJO_T "\x1b[31m"
+#define VERDE_T "\x1b[32m"
+#define AMARILLO_T "\x1b[33m"
+#define AZUL_T "\x1b[34m"
+#define NEGRO_T "\x1b[30m"
+#define CYAN_T "\x1b[36m"
+#define RESET_COLOR "\x1b[0m"
 #define TRUE 1
 #define FALSE 0
 #define VACIO -1
@@ -128,17 +136,23 @@ void matrixFill(int **matrix){
 }
 
 void matrixShow(int **matrix){
+    printf("\n");
     for (int i = 0; i < nplantas; ++i) {
         for (int j = 0; j < nplazas; ++j) {
-            printf("[%d] ",matrix[i][j]);
+            if(matrix[i][j]>1000){
+                printf(ROJO_T"[ "AZUL_T"%d"ROJO_T" ] " RESET_COLOR,matrix[i][j]);
+            }else if(matrix[i][j] == -1){
+                printf(ROJO_T"[ "NEGRO_T"%d"ROJO_T" ] " RESET_COLOR,matrix[i][j]);
+            }else{
+                printf(ROJO_T"[ "CYAN_T"%d"ROJO_T" ] " RESET_COLOR,matrix[i][j]);
+            }
         }
         printf("\n");
     }
+    printf("\n");
 }
 
 void *addCamion(void *matricula) {
-
-    //TODO Manejar el tema de tener 2 huecos en vez de uno, la condición debería ser distinta
 
     int m = *((int *) matricula);
     printf("Matricula -> %d\n",m);
@@ -149,7 +163,7 @@ void *addCamion(void *matricula) {
         /* Cuando despertamos, entramos en ZONA CRÍTICA */
         pthread_mutex_lock(&mutex);
         //Necesitamos mínimo 2 plazas para meter un camión
-        while ((plazas_ocupadas == (nplazas * nplantas)) || (plazas_ocupadas == (nplazas * nplantas)-1)) {
+        while ((nplazas * nplantas - plazas_ocupadas) < 2) {
             pthread_cond_wait(&nuevoEspacio, &mutex); // Esperamos a tener un hueco
         }
         /* Tenemos hueco, seguimos */
@@ -172,7 +186,8 @@ void *addCamion(void *matricula) {
         }
         printf("Entrada al parking. CAMION %d en plazas %d y %d en planta %d.\n", m, plaza_recien_ocupada[0],
                plaza_recien_ocupada[1], planta_recien_ocupada);
-        printf("Plazas libres: %ld\n", (nplazas * nplantas) - plazas_ocupadas);
+        printf("Plazas libres: %ld\n", ((nplazas * nplantas) - plazas_ocupadas));
+        matrixShow(parking);
         pthread_mutex_unlock(&mutex);
         /* Salimos de la ZONA CRÍTICA, dormimos random y salimos del parking */
         sleep((rand() % 100) + 5);
@@ -183,7 +198,8 @@ void *addCamion(void *matricula) {
         plazas_ocupadas -= 2;
         printf("Salida al parking. CAMION %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[0],
                plaza_recien_ocupada[1]);
-        printf("Plazas libres: %ld\n", (ncoches * nplantas) - plazas_ocupadas);
+        printf("Plazas libres: %ld\n", ((nplazas * nplantas) - plazas_ocupadas));
+        matrixShow(parking);
         /* Desbloqueamos al menos un thread que está bloqueado por el parking lleno */
         // https://linux.die.net/man/3/pthread_cond_signal
         pthread_cond_signal(&nuevoEspacio);
@@ -200,7 +216,7 @@ void *addCoche(void *matricula){
         sleep((rand() % 10) + 5);
         /* Cuando despertamos, entramos en ZONA CRÍTICA */
         pthread_mutex_lock(&mutex);
-        while (plazas_ocupadas == (nplazas * nplantas)){
+        while ((nplazas * nplantas - plazas_ocupadas) < 1){
             pthread_cond_wait(&nuevoEspacio, &mutex); // Esperamos a tener un hueco
         }
         /* Tenemos hueco, seguimos */
@@ -209,7 +225,7 @@ void *addCoche(void *matricula){
             for (int j = 0; j < nplazas; ++j) {
                 if (parking[i][j] == VACIO){ // Tenemos un hueco para el coche
                     parking[i][j] = m;
-                    plazas_ocupadas += 1;
+                    plazas_ocupadas ++;
                     plaza_recien_ocupada[0] = i; // La planta que se encuentra la plaza
                     plaza_recien_ocupada[1] = j; // Plaza ocupada
                     encontrado = TRUE;
@@ -220,6 +236,8 @@ void *addCoche(void *matricula){
             }
         }
         printf("Entrada al parking. COCHE %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[1], plaza_recien_ocupada[0]);
+        printf("Plazas libres: %ld\n", ((nplazas * nplantas) - plazas_ocupadas));
+        matrixShow(parking);
         //printf("Plazas libres: %ld\n", (nplazas * nplantas) - plazas_ocupadas);
         pthread_mutex_unlock(&mutex);
         /* Salimos de la ZONA CRÍTICA, dormimos random y salimos del parking */
@@ -227,8 +245,9 @@ void *addCoche(void *matricula){
         /* Volvemos a entrar en ZONA CRÍTICA */
         pthread_mutex_lock(&mutex);
         parking[plaza_recien_ocupada[0]][plaza_recien_ocupada[1]] = VACIO; // Ponemos el hueco del parking vacío
-        plazas_ocupadas -= 1;
+        plazas_ocupadas --;
         printf("Salida del parking. COCHE %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[1], plaza_recien_ocupada[0]);
+        printf("Plazas libres: %ld\n", ((nplazas * nplantas) - plazas_ocupadas));
         //printf("Plazas libres: %ld\n", (ncoches * nplantas) - plazas_ocupadas);
         /* Desbloqueamos al menos un thread que está bloqueado por el parking lleno */
         // https://linux.die.net/man/3/pthread_cond_signal
