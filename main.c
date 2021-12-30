@@ -162,7 +162,7 @@ void *addCamion(void *matricula) {
                     plaza_recien_ocupada[0] = j; // Plaza 1 ocupada
                     plaza_recien_ocupada[1] = j+1; // Plaza 2 ocupada
                     planta_recien_ocupada = i; // La planta que se encuentra la plaza
-                    j++;
+                    break;
                 }
             }
         }
@@ -177,8 +177,8 @@ void *addCamion(void *matricula) {
         parking[planta_recien_ocupada][plaza_recien_ocupada[0]] = VACIO;
         parking[planta_recien_ocupada][plaza_recien_ocupada[1]] = VACIO; // Ponemos el hueco del parking vacío
         plazas_ocupadas -= 2;
-        printf("Salida al parking. COCHE %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[0],
-               plaza_recien_ocupada[1]);
+        printf("Salida al parking. CAMION %d en plaza %d y %d en planta %d.\n", m, plaza_recien_ocupada[0],
+               plaza_recien_ocupada[1], planta_recien_ocupada);
         printf("Plazas libres: %ld\n", (ncoches * nplantas) - plazas_ocupadas);
         /* Desbloqueamos al menos un thread que está bloqueado por el parking lleno */
         // https://linux.die.net/man/3/pthread_cond_signal
