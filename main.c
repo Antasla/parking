@@ -188,6 +188,8 @@ void *addCamion(void *matricula) {
                 if (ocupado == TRUE)
                     break;
             }
+            if(ocupado == TRUE)
+                break;
         }
         printf("Entrada al parking. CAMION %d en plazas %d y %d en planta %d.\n", m, plaza_recien_ocupada[0],
                plaza_recien_ocupada[1], planta_recien_ocupada);
@@ -241,6 +243,8 @@ void *addCoche(void *matricula){
                 if(encontrado == TRUE)
                     break;
             }
+            if(encontrado == TRUE)
+                break;
         }
         printf("Entrada al parking. COCHE %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[1], plaza_recien_ocupada[0]);
         printf("Plazas libres: %ld\n", ((nplazas * nplantas) - plazas_ocupadas));
