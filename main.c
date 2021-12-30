@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 #define ROJO_T "\x1b[31m"
 #define VERDE_T "\x1b[32m"
@@ -24,8 +23,8 @@ long plazas_ocupadas;
 pthread_mutex_t mutex;
 pthread_cond_t nuevoEspacio;
 
-
-void matrixFree(int **matrix, long n);
+void sigHand(int signal);
+void matrixFree(int **matrix);
 void matrixFill(int **matrix);
 void *addCamion(void *matricula);
 void *addCoche(void *matricula);
@@ -35,6 +34,7 @@ void matrixShow(int **matrix);
 int main(int argc, char *argv[]){
 
     srand(time(0));
+    signal(SIGINT, sigHand);
 
     if (argc < 3){
         printf("Argumentos inválidos\n");
@@ -129,9 +129,9 @@ int main(int argc, char *argv[]){
     while(TRUE);
 }
 
-void matrixFree(int **matrix, long n) {
+void matrixFree(int **matrix) {
     int i;
-    for(i = 0; i < n; i++) {
+    for(i = 0; i < nplazas; i++) {
         free(matrix[i]);
     }
     free(matrix);
@@ -273,4 +273,11 @@ void *addCoche(void *matricula){
         pthread_cond_signal(&nuevoEspacio);
         pthread_mutex_unlock(&mutex);
     }
+}
+
+
+void sigHand(int signal){
+    printf(AMARILLO_T"\n[*] Liberando memoria del parking y saliendo...");
+    matrixFree(parking);
+    exit(1);
 }
