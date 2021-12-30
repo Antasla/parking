@@ -247,8 +247,6 @@ void *addCoche(void *matricula){
                     encontrado = TRUE;
                     break;
                 }
-                if(encontrado == TRUE)
-                    break;
             }
             if(encontrado == TRUE)
                 break;
