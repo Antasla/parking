@@ -1,10 +1,26 @@
+/*
+ ____________________________________
+/ Hecho por Clara Contreras e Ismael \
+\ Esquilichi                         /
+ ------------------------------------
+   \
+    \
+        .--.
+       |o_o |
+       |:_/ |
+      //   \ \
+     (|     | )
+    /'\_   _/`\
+    \___)=(___/
+
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <signal.h>
 
 #define ROJO_T "\x1b[31m"
-#define VERDE_T "\x1b[32m"
 #define AMARILLO_T "\x1b[33m"
 #define AZUL_T "\x1b[34m"
 #define NEGRO_T "\x1b[30m"
@@ -13,6 +29,22 @@
 #define TRUE 1
 #define FALSE 0
 #define VACIO -1
+
+/*
+  ____________________
+< Variables Globales >
+ --------------------
+   \
+    \
+        .--.
+       |o_o |
+       |:_/ |
+      //   \ \
+     (|     | )
+    /'\_   _/`\
+    \___)=(___/
+
+ */
 
 int **parking; // Matriz que nos servirá para aparcar los coches y camiones
 long nplazas;
@@ -30,6 +62,22 @@ void *addCamion(void *matricula);
 void *addCoche(void *matricula);
 void matrixShow(int **matrix);
 int huecoCamion();
+
+
+/*
+ ______
+< Main >
+ ------
+   \
+    \
+        .--.
+       |o_o |
+       |:_/ |
+      //   \ \
+     (|     | )
+    /'\_   _/`\
+    \___)=(___/
+ */
 
 int main(int argc, char *argv[]){
 
@@ -166,6 +214,22 @@ void matrixShow(int **matrix){
     printf("\033[A\r\33[2K");
 }
 
+/*
+ ______
+ < 🚚 >
+ ------
+   \
+    \
+        .--.
+       |o_o |
+       |:_/ |
+      //   \ \
+     (|     | )
+    /'\_   _/`\
+    \___)=(___/
+
+ */
+
 void *addCamion(void *matricula) {
 
     int m = *((int *) matricula);
@@ -220,6 +284,21 @@ void *addCamion(void *matricula) {
         pthread_mutex_unlock(&mutex);
     }
 }
+/*
+    ______
+    < 🚙 >
+    ------
+   \
+    \
+        .--.
+       |o_o |
+       |:_/ |
+      //   \ \
+     (|     | )
+    /'\_   _/`\
+    \___)=(___/
+
+ */
 
 void *addCoche(void *matricula){
     int m = *((int *) matricula);
