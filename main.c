@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <signal.h>
 
 #define ROJO_T "\x1b[31m"
 #define VERDE_T "\x1b[32m"
@@ -20,10 +19,9 @@ long nplazas;
 long nplantas;
 long ncoches;
 long ncamiones;
-__sig_atomic_t  plazas_ocupadas;
+long plazas_ocupadas;
 pthread_mutex_t mutex;
-pthread_cond_t nuevoEspacioCoche;
-pthread_cond_t nuevoEspacioCamion;
+pthread_cond_t nuevoEspacio;
 
 void sigHand(int signal);
 void matrixFree(int **matrix);
@@ -31,7 +29,7 @@ void matrixFill(int **matrix);
 void *addCamion(void *matricula);
 void *addCoche(void *matricula);
 void matrixShow(int **matrix);
-
+int huecoCamion();
 
 int main(int argc, char *argv[]){
 
@@ -126,8 +124,7 @@ int main(int argc, char *argv[]){
 
     /* Inicializamos el mutex y la condición que usaremos para esperar cuando el parking esté lleno */
     pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init(&nuevoEspacioCoche, NULL);
-    pthread_cond_init(&nuevoEspacioCamion, NULL);
+    pthread_cond_init(&nuevoEspacio, NULL);
 
     while(TRUE);
 }
@@ -149,7 +146,7 @@ void matrixFill(int **matrix){
 }
 
 void matrixShow(int **matrix){
-    
+
     for (int i = 0; i < nplantas; ++i) {
         for (int j = 0; j < nplazas; ++j) {
             if(matrix[i][j]>1000){
@@ -176,12 +173,12 @@ void *addCamion(void *matricula) {
     int plaza_recien_ocupada[2];
     int planta_recien_ocupada;
     while (TRUE) {
-        sleep((rand() % 25) + 5);
+        sleep((rand() % 10) + 5);
         /* Cuando despertamos, entramos en ZONA CRÍTICA */
         pthread_mutex_lock(&mutex);
         //Necesitamos mínimo 2 plazas para meter un camión
-        while (((nplazas * nplantas) - plazas_ocupadas) < 2) {
-            pthread_cond_wait(&nuevoEspacioCamion, &mutex); // Esperamos a tener un hueco
+        while (!huecoCamion()) {
+            pthread_cond_wait(&nuevoEspacio, &mutex); // Esperamos a tener un hueco
         }
         /* Tenemos hueco, seguimos */
         int ocupado = FALSE;
@@ -207,19 +204,19 @@ void *addCamion(void *matricula) {
         matrixShow(parking);
         pthread_mutex_unlock(&mutex);
         /* Salimos de la ZONA CRÍTICA, dormimos random y salimos del parking */
-        sleep((rand() % 25) + 5);
+        sleep((rand() % 10) + 5);
         /* Volvemos a entrar en ZONA CRÍTICA */
         pthread_mutex_lock(&mutex);
         parking[planta_recien_ocupada][plaza_recien_ocupada[0]] = VACIO;
         parking[planta_recien_ocupada][plaza_recien_ocupada[1]] = VACIO; // Ponemos el hueco del parking vacío
-        plazas_ocupadas = plazas_ocupadas - 2;
+        plazas_ocupadas -= 2;
         printf("Salida al parking. CAMION %d en plaza %d en planta %d.\n", m, plaza_recien_ocupada[0],
                plaza_recien_ocupada[1]);
         printf("Plazas libres: %ld\n", ((nplazas * nplantas) - plazas_ocupadas));
         matrixShow(parking);
         /* Desbloqueamos al menos un thread que está bloqueado por el parking lleno */
         // https://linux.die.net/man/3/pthread_cond_signal
-        pthread_cond_signal(&nuevoEspacioCamion);
+        pthread_cond_signal(&nuevoEspacio);
         pthread_mutex_unlock(&mutex);
     }
 }
@@ -227,16 +224,16 @@ void *addCamion(void *matricula) {
 void *addCoche(void *matricula){
     int m = *((int *) matricula);
     printf("Matricula -> %d\n",m);
-    if(m == ncoches+ncamiones)
+    if(m == ncoches)
         printf("\n");
     int plaza_recien_ocupada[2];
     int encontrado;
     while(TRUE){
-        sleep((rand() % 25) + 5);
+        sleep((rand() % 10) + 5);
         /* Cuando despertamos, entramos en ZONA CRÍTICA */
         pthread_mutex_lock(&mutex);
         while ((nplazas * nplantas - plazas_ocupadas) < 1){
-            pthread_cond_wait(&nuevoEspacioCoche, &mutex); // Esperamos a tener un hueco
+            pthread_cond_wait(&nuevoEspacio, &mutex); // Esperamos a tener un hueco
         }
         /* Tenemos hueco, seguimos */
         encontrado = FALSE;
@@ -260,7 +257,7 @@ void *addCoche(void *matricula){
         //printf("Plazas libres: %ld\n", (nplazas * nplantas) - plazas_ocupadas);
         pthread_mutex_unlock(&mutex);
         /* Salimos de la ZONA CRÍTICA, dormimos random y salimos del parking */
-        sleep((rand() % 25) + 5);
+        sleep((rand() % 10) + 5);
         /* Volvemos a entrar en ZONA CRÍTICA */
         pthread_mutex_lock(&mutex);
         parking[plaza_recien_ocupada[0]][plaza_recien_ocupada[1]] = VACIO; // Ponemos el hueco del parking vacío
@@ -273,18 +270,22 @@ void *addCoche(void *matricula){
         /* Imprimimos el estado del parking */
         matrixShow(parking);
 
-        if((plaza_recien_ocupada[1]+1 < nplazas && *parking[plaza_recien_ocupada[1]+1] == -1)
-            || plaza_recien_ocupada[1]-1 > 0 && *parking[plaza_recien_ocupada[1]-1]){
-            
-            pthread_cond_signal(&nuevoEspacioCamion);
-        }else{
-            pthread_cond_signal(&nuevoEspacioCoche);
-        }
-        
+        pthread_cond_signal(&nuevoEspacio);
         pthread_mutex_unlock(&mutex);
     }
 }
 
+int huecoCamion() {
+    for (int i = 0; i < nplantas; ++i) {
+        for (int j = 0; j < nplazas; ++j) {
+            if ((j+1<nplazas) && (parking[i][j] == VACIO) && (parking[i][j+1] == VACIO)) {
+                //printf("Cumplo condición");
+                return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}
 
 void sigHand(int signal){
     printf(AMARILLO_T"\n[*] Liberando memoria del parking y saliendo...");
